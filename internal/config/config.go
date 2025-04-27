@@ -57,7 +57,7 @@ func (c Config) SetUser(currentUser string) error {
 		return fmt.Errorf("user home directory not found")
 	}
 
-	file, err := os.OpenFile(cfgPath, os.O_WRONLY, os.ModeAppend)
+	file, err := os.OpenFile(cfgPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, os.ModeAppend)
 	if err != nil {
 		return fmt.Errorf("config path not found")
 	}
