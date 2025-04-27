@@ -51,6 +51,7 @@ func main() {
 	cmd.register("register", handlerRegister)
 	cmd.register("reset", handlerReset)
 	cmd.register("users", handlerListUsers)
+	cmd.register("agg", handlerAgg)
 
 	// Deal with arguments
 	args := os.Args
