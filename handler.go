@@ -1,18 +1,50 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
 		return fmt.Errorf("the login handler expects a single argument, the username")
 	}
 
-	err := s.config.SetUser(cmd.args[0])
+	name := cmd.args[0]
+
+	_, err := s.db.GetUser(context.Background(), name)
+	if err != nil {
+		return fmt.Errorf("user not found")
+	}
+
+	err = s.config.SetUser(name)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("New user set successfully.")
+
+	return nil
+}
+
+func handlerRegister(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return fmt.Errorf("the register handler expects a single argument, the username")
+	}
+
+	name := cmd.args[0]
+
+	_, err := s.db.CreateUser(context.Background(), name)
+	if err != nil {
+		return fmt.Errorf("user already exists")
+	}
+
+	err = s.config.SetUser(name)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("New user created successfully.")
 
 	return nil
 }

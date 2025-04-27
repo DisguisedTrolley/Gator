@@ -2,9 +2,13 @@
 INSERT INTO users (
 	id, created_at, updated_at, name
 ) VALUES ( 
-	$1,
-	$2,
-	$3,
-	$4
+	gen_random_uuid(),
+	NOW(),
+	NOW(),
+	$1
 )
 RETURNING *;
+
+-- name: GetUser :one
+SELECT * from users
+WHERE name = $1;

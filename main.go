@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -10,37 +11,46 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const dbUrl = "postgres://samarthbhat:@localhost:5432/gator"
+const dbUrl = "postgres://samarthbhat:@localhost:5432/gator?sslmode=disable"
 
 type state struct {
 	config *config.Config
 	db     *database.Queries
 }
 
-func main() {
+func newState() (*state, error) {
 	cfgFile, err := config.ReadConfig()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
-		log.Fatal("unable to connect to database")
+		return nil, fmt.Errorf("unable to connect to database")
 	}
 
 	dbQueries := database.New(db)
 
-	s := state{
+	return &state{
 		config: &cfgFile,
 		db:     dbQueries,
+	}, nil
+}
+
+func main() {
+	progState, err := newState()
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	// Register commands
 	cmd := commands{
 		cmd: make(map[string]func(*state, command) error),
 	}
 	cmd.register("login", handlerLogin)
+	cmd.register("register", handlerRegister)
 
-	// Read cmd args
+	// Deal with arguments
 	args := os.Args
 	if len(args) < 2 {
 		log.Fatal("Insufficient arguments")
@@ -49,7 +59,7 @@ func main() {
 	cmdName := args[1]
 	arguments := args[2:]
 
-	err = cmd.run(&s, command{name: cmdName, args: arguments})
+	err = cmd.run(progState, command{name: cmdName, args: arguments})
 	if err != nil {
 		log.Fatal(err)
 	}
