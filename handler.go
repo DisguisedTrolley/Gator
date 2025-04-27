@@ -49,6 +49,24 @@ func handlerRegister(s *state, cmd command) error {
 	return nil
 }
 
+func handlerListUsers(s *state, cmd command) error {
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to fetch users: %v", err)
+	}
+
+	for _, user := range users {
+		str := fmt.Sprintf("* %s", user.Name)
+		if user.Name == s.config.CurrentUserName {
+			str += " (current)"
+		}
+
+		fmt.Println(str)
+	}
+
+	return nil
+}
+
 func handlerReset(s *state, _ command) error {
 	err := s.db.DeleteUsers(context.Background())
 	if err != nil {
