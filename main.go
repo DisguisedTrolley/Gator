@@ -49,11 +49,12 @@ func main() {
 	}
 	cmd.register("login", handlerLogin)
 	cmd.register("register", handlerRegister)
+	cmd.register("reset", handlerReset)
 
 	// Deal with arguments
 	args := os.Args
 	if len(args) < 2 {
-		log.Fatal("Insufficient arguments")
+		log.Fatal("Usage: cli <command> [args...]")
 	}
 
 	cmdName := args[1]
