@@ -2,10 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/DisguisedTrolley/gator/internal/database"
+	"github.com/lib/pq"
 )
+
+const LAYOUT = "Mon, 02 Jan 2006 15:04:05 -0700"
 
 func handlerAgg(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
@@ -43,11 +49,39 @@ func scrapeFeeds(s *state) {
 	}
 
 	for _, item := range fetched.Channel.Item {
-		fmt.Println(item.Title)
+		pubTime, err := time.Parse(LAYOUT, item.PubDate)
+		if err != nil {
+			log.Fatal("time format incorrect: ", err)
+		}
+
+		desc := sql.NullString{
+			String: item.Description,
+			Valid:  item.Description != "",
+		}
+
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			Title:       item.Title,
+			Description: desc,
+			Url:         item.Link,
+			PublishedAt: pubTime,
+			FeedID:      feed.ID,
+		})
+
+		if err == nil {
+			continue
+		}
+
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code != "23505" {
+				log.Fatal("error creating post: ", pgErr.Error())
+			}
+		}
+
+		fmt.Println("Added post: ", item.Title)
+
 	}
 
 	fmt.Println()
-	fmt.Println("=================================")
-	fmt.Println("=================================")
+	fmt.Println("===================================")
 	fmt.Println()
 }
